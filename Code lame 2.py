@@ -2,6 +2,7 @@ import numpy as np
 from numpy.random import *
 import matplotlib.pyplot as plt
 from numpy.fft import *
+from scipy import signal
 
 lame2 = [7.3742780E+6,-5.0006250E+1, 1.9296531E+2,
  7.3743580E+6,-4.9996328E+1, 1.9296531E+2,
@@ -20204,6 +20205,13 @@ for i in P2:
     x = i/1
     position2.append(x)
 
+moyennetension2 = sum(tension2)/len(tension2)
+tension2moinsmoyenne = []
+for i in range(len(tension2)):
+    x = tension[i] - moyennetension2
+    tension2moinsmoyenne.append(x)
+
+
 def generateWhiteLightInterferogram(xMin, xMax, N):
 	dx = (xMax - xMin)/N
 	x = position2
@@ -20211,10 +20219,10 @@ def generateWhiteLightInterferogram(xMin, xMax, N):
 	return (x,y)
 
 def fourierTransformInterferogram(x,y):
-	spectrum = fft(tension2)
+	spectrum = fftshift(fft(signal.detrend(tension2, type = 'constant')))
 	dx = x[1]-x[0] # on obtient dx, on suppose equidistant
 	N = len(x)     # on obtient N directement des données
-	frequencies = fftfreq(N, dx) # Cette fonction est fournie par numpy
+	frequencies = fftshift(fftfreq(N, dx)) # Cette fonction est fournie par numpy
 	wavelengths = 1000/frequencies
 	wavenumber = 10000000/wavelengths
 	return (wavenumber, frequencies, spectrum)
@@ -20243,7 +20251,7 @@ def plotCombinedFigures(x, y, w, s, title="", left=400, right=800, bottom=0, top
 (w, f, s)  = fourierTransformInterferogram(x,y)
 df = f[1]-f[0]
 dl = 0.500*0.500*df*1000
-plotCombinedFigures(x,y,w,s,left=100, right=80000, bottom=0, top = 10000, title="Spectre de la source et d'une lame vide".format(dl))
+plotCombinedFigures(x,y,w,s,left=0, right=80000, bottom=0, top = 10000, title="Spectre de la source et d'une lame vide".format(dl))
 
 def generateWhiteLightInterferogram(xMin, xMax, N):
 	dx = (xMax - xMin)/N
@@ -20252,10 +20260,53 @@ def generateWhiteLightInterferogram(xMin, xMax, N):
 	return (x,y)
 
 def fourierTransformInterferogram(x,y):
-	spectrum = fft(tension)
+	spectrum = fftshift(fft(signal.detrend(tension, type = 'constant')))
 	dx = x[1]-x[0] # on obtient dx, on suppose equidistant
 	N = len(x)     # on obtient N directement des données
-	frequencies = fftfreq(N, dx) # Cette fonction est fournie par numpy
+	frequencies = fftshift(fftfreq(N, dx)) # Cette fonction est fournie par numpy
+	wavelengths = 1000/frequencies
+	wavenumber = 10000000/wavelengths
+	return (wavenumber, frequencies, spectrum)
+
+
+def plotCombinedFigures(x, y, w, s, title="", left=400, right=800, bottom=0, top=0):
+	fig, (axes, axesFFT) = plt.subplots(2,1,figsize=(10, 7))
+	axes.plot(x, y, '-')
+	axes.set_title("Interférogramme de la lame contenant l'échantillon 1")
+	axes.set_xlabel("Position[μm]")
+	axes.set_ylabel("Tension[mV]")
+	axesFFT.plot(w, abs(s))
+	axesFFT.set_xlim(left=left, right=right)
+	axesFFT.set_ylim(bottom=bottom, top=top)    
+	axesFFT.set_xlabel("Longueur d'onde [cm-1]")
+	axesFFT.set_ylabel("Intensité")
+	axesFFT.set_title(title)
+	plt.subplots_adjust(left=0.125,
+                    bottom=0.1, 
+                    right=0.9, 
+                    top=0.9, 
+                    wspace=0.2, 
+                    hspace=0.35)
+	plt.show()
+
+(x,y) = generateWhiteLightInterferogram(xMin=-100, xMax=100, N=20000) 
+(w, f, s)  = fourierTransformInterferogram(x,y)
+df = f[1]-f[0]
+dl = 0.500*0.500*df*1000
+plotCombinedFigures(x,y,w,s,left=100, right=80000, bottom=0, top = 6000, title="Spectre de la lame avec l'échantillon 1 et de la source".format(dl))
+
+
+def generateWhiteLightInterferogram(xMin, xMax, N):
+	dx = (xMax - xMin)/N
+	x = position
+	y = tension
+	return (x,y)
+
+def fourierTransformInterferogram(x,y):
+	spectrum = fftshift((fft(signal.detrend(tension, type = 'constant')))/(fft(signal.detrend(tension2, type = 'constant'))))
+	dx = x[1]-x[0] # on obtient dx, on suppose equidistant
+	N = len(x)     # on obtient N directement des données
+	frequencies = fftshift(fftfreq(N, dx)) # Cette fonction est fournie par numpy
 	wavelengths = 1000/frequencies
 	wavenumber = 10000000/wavelengths
 	return (wavenumber, frequencies, spectrum)
@@ -20284,46 +20335,4 @@ def plotCombinedFigures(x, y, w, s, title="", left=400, right=800, bottom=0, top
 (w, f, s)  = fourierTransformInterferogram(x,y)
 df = f[1]-f[0]
 dl = 0.500*0.500*df*1000
-plotCombinedFigures(x,y,w,s,left=40, right=80000, bottom=0, top = 10000, title="Spectre de l'échantillon".format(dl))
-
-
-def generateWhiteLightInterferogram(xMin, xMax, N):
-	dx = (xMax - xMin)/N
-	x = position
-	y = tension
-	return (x,y)
-
-def fourierTransformInterferogram(x,y):
-	spectrum = fft(tension)/fft(tension2)
-	dx = x[1]-x[0] # on obtient dx, on suppose equidistant
-	N = len(x)     # on obtient N directement des données
-	frequencies = fftfreq(N, dx) # Cette fonction est fournie par numpy
-	wavelengths = 1000/frequencies
-	wavenumber = 10000000/wavelengths
-	return (wavenumber, frequencies, spectrum)
-
-def plotCombinedFigures(x, y, w, s, title="", left=400, right=800, bottom=0, top=0):
-	fig, (axes, axesFFT) = plt.subplots(2,1,figsize=(10, 7))
-	axes.plot(x, y, '-')
-	axes.set_title("Interférogramme de l'échantillon")
-	axes.set_xlabel("Position[μm]")
-	axes.set_ylabel("Tension[mV]")
-	axesFFT.plot(w, abs(s))
-	axesFFT.set_xlim(left=left, right=right)
-	axesFFT.set_ylim(bottom=bottom, top=top)    
-	axesFFT.set_xlabel("Longueur d'onde [cm-1]")
-	axesFFT.set_ylabel("Intensité")
-	axesFFT.set_title(title)
-	plt.subplots_adjust(left=0.125,
-                    bottom=0.1, 
-                    right=0.9, 
-                    top=0.9, 
-                    wspace=0.2, 
-                    hspace=0.35)
-	plt.show()
-
-(x,y) = generateWhiteLightInterferogram(xMin=-100, xMax=100, N=20000) 
-(w, f, s)  = fourierTransformInterferogram(x,y)
-df = f[1]-f[0]
-dl = 0.500*0.500*df*1000
-plotCombinedFigures(x,y,w,s,left=40, right=510000, bottom=0, top = 200, title="Spectre d'absorption".format(dl))
+plotCombinedFigures(x,y,w,s,left=40, right=80000, bottom=0, top = 15, title="Spectre de l'échantillon 1".format(dl))
